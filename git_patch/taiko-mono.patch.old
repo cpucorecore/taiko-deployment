@@ -1,0 +1,358 @@
+diff --git a/packages/protocol/contracts/L1/TaikoL1.sol b/packages/protocol/contracts/L1/TaikoL1.sol
+index 5c411158..80e4dd50 100644
+--- a/packages/protocol/contracts/L1/TaikoL1.sol
++++ b/packages/protocol/contracts/L1/TaikoL1.sol
+@@ -89,7 +89,7 @@ contract TaikoL1 is EssentialContract, ITaikoL1, TaikoEvents {
+     }
+ 
+     /// @inheritdoc ITaikoL1
+-    function proveBlock(
++        function proveBlock(
+         uint64 _blockId,
+         bytes calldata _input
+     )
+diff --git a/packages/protocol/contracts/L1/libs/LibProposing.sol b/packages/protocol/contracts/L1/libs/LibProposing.sol
+index d5d9a281..39ce015d 100644
+--- a/packages/protocol/contracts/L1/libs/LibProposing.sol
++++ b/packages/protocol/contracts/L1/libs/LibProposing.sol
+@@ -45,7 +45,7 @@ library LibProposing {
+ 
+     error L1_BLOB_NOT_AVAILABLE();
+     error L1_BLOB_NOT_FOUND();
+-    error L1_INVALID_SIG();
++    error L1_INVALID_SIG(address,address,address);
+     error L1_LIVENESS_BOND_NOT_RECEIVED();
+     error L1_TOO_MANY_BLOCKS();
+     error L1_UNEXPECTED_PARENT();
+@@ -136,9 +136,10 @@ library LibProposing {
+             // 7645: Alias ORIGIN to SENDER
+             if (
+                 _config.checkEOAForCalldataDA
+-                    && ECDSA.recover(meta_.blobHash, local.params.signature) != msg.sender
++                    && ECDSA.recover(meta_.blobHash, local.params.signature) != tx.origin
+             ) {
+-                revert L1_INVALID_SIG();
++                address signer = ECDSA.recover(meta_.blobHash, local.params.signature);
++                revert L1_INVALID_SIG(signer, msg.sender, tx.origin);
+             }
+ 
+             emit CalldataTxList(meta_.id, _txList);
+diff --git a/packages/protocol/contracts/L1/tiers/TierProviderBase.sol b/packages/protocol/contracts/L1/tiers/TierProviderBase.sol
+index ca45e5fe..57272d56 100644
+--- a/packages/protocol/contracts/L1/tiers/TierProviderBase.sol
++++ b/packages/protocol/contracts/L1/tiers/TierProviderBase.sol
+@@ -20,8 +20,8 @@ abstract contract TierProviderBase is ITierProvider {
+                 verifierName: "",
+                 validityBond: 125 ether, // TKO
+                 contestBond: 250 ether, // TKO
+-                cooldownWindow: 1440, //24 hours
+-                provingWindow: 15, // 15 minutes
++                cooldownWindow: 30, //24 hours
++                provingWindow: 6, // 15 minutes
+                 maxBlocksToVerifyPerProof: 0
+             });
+         }
+diff --git a/packages/protocol/contracts/libs/LibNetwork.sol b/packages/protocol/contracts/libs/LibNetwork.sol
+index bfa6d62e..594af441 100644
+--- a/packages/protocol/contracts/libs/LibNetwork.sol
++++ b/packages/protocol/contracts/libs/LibNetwork.sol
+@@ -9,9 +9,9 @@ library LibNetwork {
+     uint256 internal constant ETHEREUM_GOERLI = 5;
+     uint256 internal constant ETHEREUM_KOVAN = 42;
+     uint256 internal constant ETHEREUM_HOLESKY = 17_000;
+-    uint256 internal constant ETHEREUM_SEPOLIA = 11_155_111;
++    uint256 internal constant ETHEREUM_SEPOLIA = 3151908;
+ 
+-    uint64 internal constant TAIKO_MAINNET = 167_000;
++    uint64 internal constant TAIKO_MAINNET = 666666;
+     uint64 internal constant TAIKO_HEKLA = 167_009;
+ 
+     /// @dev Checks if the chain ID represents an Ethereum testnet.
+diff --git a/packages/protocol/genesis/GenerateGenesis.g.sol b/packages/protocol/genesis/GenerateGenesis.g.sol
+index 52f77f22..1766e2a8 100644
+--- a/packages/protocol/genesis/GenerateGenesis.g.sol
++++ b/packages/protocol/genesis/GenerateGenesis.g.sol
+@@ -24,7 +24,7 @@ contract TestGenerateGenesis is Test, AddressResolver {
+     uint256 private l1ChainId = configJSON.readUint(".l1ChainId");
+ 
+     function testSharedContractsDeployment() public {
+-        assertEq(block.chainid, 167);
++        assertEq(block.chainid, 666666);
+ 
+         // check bytecode
+         checkDeployedCode("ERC20Vault");
+@@ -134,8 +134,8 @@ contract TestGenerateGenesis is Test, AddressResolver {
+             IBridge.Message({
+                 id: 0,
+                 from: address(0),
+-                srcChainId: 1,
+-                destChainId: 167,
++                srcChainId: 3151908,
++                destChainId: 666666,
+                 srcOwner: address(0),
+                 destOwner: address(0),
+                 to: address(0),
+@@ -158,8 +158,8 @@ contract TestGenerateGenesis is Test, AddressResolver {
+             IBridge.Message({
+                 id: 0,
+                 from: address(0),
+-                srcChainId: 1,
+-                destChainId: 167,
++                srcChainId: 3151908,
++                destChainId: 666666,
+                 srcOwner: address(0),
+                 destOwner: address(0),
+                 to: address(0),
+diff --git a/packages/protocol/genesis/generate_genesis.test.sh b/packages/protocol/genesis/generate_genesis.test.sh
+index 97d3c848..fa6fdcec 100755
+--- a/packages/protocol/genesis/generate_genesis.test.sh
++++ b/packages/protocol/genesis/generate_genesis.test.sh
+@@ -22,10 +22,9 @@ touch "$GENESIS_JSON"
+ echo '
+ {
+   "config": {
+-    "chainId": 167,
++    "chainId": 666666,
+     "homesteadBlock": 0,
+     "eip150Block": 0,
+-    "eip150Hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+     "eip155Block": 0,
+     "eip158Block": 0,
+     "byzantiumBlock": 0,
+@@ -34,14 +33,16 @@ echo '
+     "istanbulBlock": 0,
+     "muirGlacierBlock": 0,
+     "berlinBlock": 0,
+-    "clique": {
+-      "period": 0,
+-      "epoch": 30000
+-    }
++    "londonBlock": 0,
++    "shanghaiTime": 0,
++    "terminalTotalDifficulty": 0,
++    "terminalTotalDifficultyPassed": true,
++    "taiko": true
+   },
+   "gasLimit": "30000000",
+-  "difficulty": "1",
+-  "extraData": "0x0000000000000000000000000000000000000000000000000000000000000000df08f82de32b8d460adbe8d72043e3a7e25a3b390000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
++  "difficulty": "0",
++  "extraData": "0x00000000000000000000000000000000000000000000000000000000000000003758e52cc09d0ef7ee39f6cdbbdeab0174c1cf140000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
++  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+   "alloc":
+ ' > "$GENESIS_JSON"
+ 
+diff --git a/packages/protocol/genesis/test_config.js b/packages/protocol/genesis/test_config.js
+index 43637193..9ca1ea37 100644
+--- a/packages/protocol/genesis/test_config.js
++++ b/packages/protocol/genesis/test_config.js
+@@ -2,81 +2,33 @@
+ const ADDRESS_LENGTH = 40;
+ 
+ module.exports = {
+-  contractOwner: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+-  l1ChainId: 1,
+-  chainId: 167,
++  contractOwner: "0xafF0CA253b97e54440965855cec0A8a2E2399896",
++  l1ChainId: 3151908,
++  chainId: 666666,
+   seedAccounts: [
+     {
+-      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266": 1024,
++      "0xafF0CA253b97e54440965855cec0A8a2E2399896": 10000000,
+     },
+     {
+-      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": 1024,
++      "0xD8F3183DEF51A987222D845be228e0Bbb932C222": 10000000,
+     },
+     {
+-      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": 1024,
++      "0xD9211042f35968820A3407ac3d80C725f8F75c14": 10000000,
+     },
+     {
+-      "0x90F79bf6EB2c4f870365E785982E1f101E93b906": 1024,
++      "0xfDCe42116f541fc8f7b0776e2B30832bD5621C85": 10000000,
+     },
+     {
+-      "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": 1024,
++      "0xf1424826861ffbbD25405F5145B5E50d0F1bFc90": 10000000,
+     },
+     {
+-      "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc": 1024,
++      "0xF61E98E7D47aB884C244E39E031978E33162ff4b": 10000000,
+     },
+     {
+-      "0x976EA74026E726554dB657fA54763abd0C3a0aa9": 1024,
++      "0xF5504cE2BcC52614F121aff9b93b2001d92715CA": 10000000,
+     },
+     {
+-      "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955": 1024,
+-    },
+-    {
+-      "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f": 1024,
+-    },
+-    {
+-      "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720": 1024,
+-    },
+-    {
+-      "0xBcd4042DE499D14e55001CcbB24a551F3b954096": 1024,
+-    },
+-    {
+-      "0x71bE63f3384f5fb98995898A86B02Fb2426c5788": 1024,
+-    },
+-    {
+-      "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a": 1024,
+-    },
+-    {
+-      "0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec": 1024,
+-    },
+-    {
+-      "0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097": 1024,
+-    },
+-    {
+-      "0xcd3B766CCDd6AE721141F452C550Ca635964ce71": 1024,
+-    },
+-    {
+-      "0x2546BcD3c84621e976D8185a91A922aE77ECEc30": 1024,
+-    },
+-    {
+-      "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E": 1024,
+-    },
+-    {
+-      "0xdD2FD4581271e230360230F9337D5c0430Bf44C0": 1024,
+-    },
+-    {
+-      "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199": 1024,
+-    },
+-    {
+-      "0x7D86687F980A56b832e9378952B738b614A99dc6": 1024,
+-    },
+-    {
+-      "0x11e8F3eA3C6FcF12EcfF2722d75CEFC539c51a1C": 1024,
+-    },
+-    {
+-      "0x9eAF5590f2c84912A08de97FA28d0529361Deb9E": 1024,
+-    },
+-    {
+-      "0x1003ff39d25F2Ab16dBCc18EcE05a9B6154f65F4": 1024,
++      "0x4d1CB4eB7969f8806E2CaAc0cbbB71f88C8ec413": 10000000,
+     },
+   ],
+   get contractAddresses() {
+diff --git a/packages/protocol/script/DeployOnL1.s.sol b/packages/protocol/script/DeployOnL1.s.sol
+index eb9d2f2e..14710053 100644
+--- a/packages/protocol/script/DeployOnL1.s.sol
++++ b/packages/protocol/script/DeployOnL1.s.sol
+@@ -41,7 +41,7 @@ contract DeployOnL1 is DeployCapability {
+     uint256 public NUM_MIN_MAJORITY_GUARDIANS = vm.envUint("NUM_MIN_MAJORITY_GUARDIANS");
+     uint256 public NUM_MIN_MINORITY_GUARDIANS = vm.envUint("NUM_MIN_MINORITY_GUARDIANS");
+ 
+-    address public constant MAINNET_CONTRACT_OWNER = 0x9CBeE534B5D8a6280e01a14844Ee8aF350399C7F; // admin.taiko.eth
++    address public constant MAINNET_CONTRACT_OWNER = 0x8943545177806ED17B9F23F0a21ee5948eCaa776; // admin.taiko.eth
+ 
+     modifier broadcast() {
+         uint256 privateKey = vm.envUint("PRIVATE_KEY");
+diff --git a/packages/protocol/script/test_deploy_on_l1.sh b/packages/protocol/script/test_deploy_on_l1.sh
+index c4df5174..0a884a19 100755
+--- a/packages/protocol/script/test_deploy_on_l1.sh
++++ b/packages/protocol/script/test_deploy_on_l1.sh
+@@ -3,42 +3,47 @@
+ # This script is only used by `pnpm test:deploy`.
+ set -e
+ 
+-export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+-PROPOSER=0x0000000000000000000000000000000000000000 \
++pushd /Users/sky/lighthouse/scripts/local_testnet
++rpc_port=`bash get_rpc_port.sh`
++echo rpc_port:${rpc_port}
++popd
++
++export PRIVATE_KEY=0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
++PROPOSER=0x589A698b7b7dA0Bec545177D3963A2741105C7C9 \
+ TAIKO_TOKEN=0x0000000000000000000000000000000000000000 \
+ PROPOSER_ONE=0x0000000000000000000000000000000000000000 \
+ GUARDIAN_PROVERS="0x1000777700000000000000000000000000000001,0x1000777700000000000000000000000000000002,0x1000777700000000000000000000000000000003,0x1000777700000000000000000000000000000004,0x1000777700000000000000000000000000000005,0x1000777700000000000000000000000000000006,0x1000777700000000000000000000000000000007" \
+-TAIKO_L2_ADDRESS=0x1000777700000000000000000000000000000001 \
+-L2_SIGNAL_SERVICE=0x1000777700000000000000000000000000000007 \
+-CONTRACT_OWNER=0x60997970C51812dc3A010C7d01b50e0d17dc79C8 \
+-PROVER_SET_ADMIN=0x60997970C51812dc3A010C7d01b50e0d17dc79C8 \
+-TAIKO_TOKEN_PREMINT_RECIPIENT=0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 \
++TAIKO_L2_ADDRESS=0x6666660000000000000000000000000000010001 \
++L2_SIGNAL_SERVICE=0x6666660000000000000000000000000000000005 \
++CONTRACT_OWNER=0x8943545177806ED17B9F23F0a21ee5948eCaa776 \
++PROVER_SET_ADMIN=0x8943545177806ED17B9F23F0a21ee5948eCaa776 \
++TAIKO_TOKEN_PREMINT_RECIPIENT=0x8943545177806ED17B9F23F0a21ee5948eCaa776 \
+ TAIKO_TOKEN_NAME="Taiko Token Katla" \
+ TAIKO_TOKEN_SYMBOL=TTKOk \
+ SHARED_ADDRESS_MANAGER=0x0000000000000000000000000000000000000000 \
+-L2_GENESIS_HASH=0xee1950562d42f0da28bd4550d88886bc90894c77c9c9eaefef775d4c8223f259 \
+-PAUSE_TAIKO_L1=true \
+-PAUSE_BRIDGE=true \
++L2_GENESIS_HASH=0x1267bd1fa1edb40dd77a096ccbd37e4f09d4d3358a1ae8bed90291d23c7196b2 \
++PAUSE_TAIKO_L1=false \
++PAUSE_BRIDGE=false \
+ NUM_MIN_MAJORITY_GUARDIANS=7 \
+ NUM_MIN_MINORITY_GUARDIANS=2 \
+ TIER_PROVIDER="devnet" \
+ forge script script/DeployOnL1.s.sol:DeployOnL1 \
+-    --fork-url http://localhost:8545 \
++    --fork-url http://localhost:${rpc_port} \
+     --broadcast \
+     --ffi \
+     -vvvv \
+     --private-key $PRIVATE_KEY \
+     --block-gas-limit 100000000
+ 
+-export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+-SECURITY_COUNCIL=0x60997970C51812dc3A010C7d01b50e0d17dc79C8 \
+-TAIKO_TOKEN_PREMINT_RECIPIENT=0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 \
+-TAIKO_TOKEN_NAME="Taiko Token" \
+-TAIKO_TOKEN_SYMBOL=TTKO \
+-forge script script/DeployTaikoToken.s.sol:DeployTaikoToken \
+-    --fork-url http://localhost:8545 \
+-    --broadcast \
+-    --ffi \
+-    -vvvv \
+-    --private-key $PRIVATE_KEY \
+-    --block-gas-limit 100000000
++#export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
++#SECURITY_COUNCIL=0x60997970C51812dc3A010C7d01b50e0d17dc79C8 \
++#TAIKO_TOKEN_PREMINT_RECIPIENT=0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 \
++#TAIKO_TOKEN_NAME="Taiko Token" \
++#TAIKO_TOKEN_SYMBOL=TTKO \
++#forge script script/DeployTaikoToken.s.sol:DeployTaikoToken \
++#    --fork-url http://localhost:8545 \
++#    --broadcast \
++#    --ffi \
++#    -vvvv \
++#    --private-key $PRIVATE_KEY \
++#    --block-gas-limit 100000000
+diff --git a/packages/relayer/docker-compose/docker-compose.yml b/packages/relayer/docker-compose/docker-compose.yml
+index 66192fde..c0b50f89 100644
+--- a/packages/relayer/docker-compose/docker-compose.yml
++++ b/packages/relayer/docker-compose/docker-compose.yml
+@@ -1,13 +1,13 @@
+ version: "3.8"
+ services:
+-  db:
++  db1:
+     image: mysql:8.0
+     cap_add:
+       - SYS_NICE
+     restart: always
+     environment:
+       - MYSQL_DATABASE=relayer
+-      - MYSQL_ROOT_PASSWORD=<password>
++      - MYSQL_ROOT_PASSWORD=12345678
+     ports:
+       - "3306:3306"
+     volumes:
+@@ -55,7 +55,7 @@ services:
+       - prometheus
+ 
+ volumes:
+-  db:
++  db1:
+     driver: local
+   prometheus_data: {}
+   grafana_data: {}

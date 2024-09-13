@@ -1,0 +1,2 @@
+source ../taiko_geth/l2.env.out
+curl --max-time 2 -s -H "Content-Type: application/json" -X POST --data '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0x0", true],"id":1}' ${RPC_URL_L2} | jq .result.hash | awk -F '"' '{print $2}'

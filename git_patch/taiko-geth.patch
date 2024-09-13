@@ -1,0 +1,13 @@
+diff --git a/core/taiko_genesis.go b/core/taiko_genesis.go
+index 80a06c72d..83adde52b 100644
+--- a/core/taiko_genesis.go
++++ b/core/taiko_genesis.go
+@@ -46,7 +46,7 @@ func TaikoGenesisBlock(networkID uint64) *Genesis {
+ 		chainConfig.ChainID = params.HeklaNetworkID
+ 		allocJSON = taikoGenesis.HeklaGenesisAllocJSON
+ 	default:
+-		chainConfig.ChainID = params.TaikoInternalL2ANetworkID
++		chainConfig.ChainID = big.NewInt(int64(int(networkID)))
+ 		allocJSON = taikoGenesis.InternalL2AGenesisAllocJSON
+ 	}
+ 

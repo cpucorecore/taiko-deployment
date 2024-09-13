@@ -1,0 +1,22 @@
+diff --git a/scripts/local_testnet/network_params.yaml b/scripts/local_testnet/network_params.yaml
+index f54fce354..7348c535a 100644
+--- a/scripts/local_testnet/network_params.yaml
++++ b/scripts/local_testnet/network_params.yaml
+@@ -2,6 +2,7 @@
+ participants:
+   - el_type: geth
+     el_image: ethereum/client-go:latest
++    el_extra_params: [--gcmode=archive]
+     cl_type: lighthouse
+     cl_image: lighthouse:local
+     cl_extra_params:
+@@ -10,5 +11,8 @@ participants:
+ network_params:
+   deneb_fork_epoch: 0
+   seconds_per_slot: 3
+-global_log_level: debug
++global_log_level: warn
+ snooper_enabled: false
++additional_services:
++  - dora
++  - prometheus_grafana
