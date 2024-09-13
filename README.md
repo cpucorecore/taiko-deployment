@@ -1,7 +1,7 @@
 # deploy requirement
 
 ## hardware
-| CPU  | MEM | HD   |
+| CPU  | MEM | HDD  |
 |------|-----|------|
 | 8C16T | 32G | 300G |
 
@@ -15,6 +15,8 @@
 ## os
 - ubuntu 24.04LTS
 
+## network proxy
+make sure the deployment env can access github, dockerhub, registry.npmjs.org
 
 ```bash
 cd
@@ -158,8 +160,10 @@ popd
 pushd l1_contract_deploy
     bash make_env.sh
     cp env deploy_on_l1.sh ${TAIKO_MONO_PROTOCOL_SCRIPT_ROOT}
+    cp update_contract_chain_id_l2.sh ${TAIKO_MONO_PROTOCOL_ROOT}
     pushd ${TAIKO_MONO_PROTOCOL_ROOT}
       source ${TAIKO_MONO_PROTOCOL_SCRIPT_ROOT}/env
+      bash update_contract_chain_id_l2.sh
       pnpm test:local_deploy
     popd
     bash update_contract_addr_l1_env.sh

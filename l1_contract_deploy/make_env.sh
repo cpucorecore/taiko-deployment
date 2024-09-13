@@ -1,4 +1,5 @@
 source ../env/l1.env
+source ../env/l2_chain_id.env
 source ../env/contract_addr_l2.env
 
 pushd ../account
@@ -15,4 +16,5 @@ printf "export RPC_URL_L1=%s\n" ${RPC_URL_L1} >> env
 printf "export PROPOSER=%s\n" ${proposer} >> env
 printf "export L2_GENESIS_HASH=%s\n" `bash get_l2_block0_hash.sh` >> env
 printf "export ADDR_TAIKO_L2=%s\n" ${ADDR_TAIKO_L2} >> env
-printf "export ADDR_SIGNAL_SERVICE_L2=%s" ${ADDR_SIGNAL_SERVICE_L2} >> env
+printf "export ADDR_SIGNAL_SERVICE_L2=%s\n" ${ADDR_SIGNAL_SERVICE_L2} >> env
+printf "export CHAIN_ID_L2=%s\n" ${CHAIN_ID_L2} >> env

@@ -2,3 +2,6 @@ genesis_config.js
 parent_account_l1.sk
 accounts
 .idea
+l1_chain_id.env
+contract_addr_l1.env
+contract_addr_l2.env
