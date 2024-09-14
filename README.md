@@ -26,6 +26,9 @@ cd taiko-deployment
 
 # configure deployment root
 modify `DEPLOYMENT_ROOT` in env/deployment_dir.env
+```bash
+source env/deployment_dir.env
+```
 
 ```bash
 pushd env
@@ -85,7 +88,6 @@ popd
 
 # git clone repositories
 ```bash
-source env/deployment_dir.env
 pushd ${DEPLOYMENT_ROOT}
 git clone --depth 1 --branch bridge-ui-v2.12.0 https://github.com/taikoxyz/taiko-mono.git
 git clone --depth 1 --branch v1.5.0 https://github.com/taikoxyz/taiko-geth.git
@@ -196,7 +198,42 @@ pushd taiko_client
 popd
 ```
 
+# prepare l2
+wait about 10min, let L2 generate some blocks
+
+```bash
+pushd prepare_l2
+  cp env prepare-l2.sh ${PREPARE_L2}
+    pushd ${PREPARE_L2}
+      bash prepare-l2.sh
+    popd
+popd
+```
+
 # bridge
+update bridge/db.cfg
+update bridge/mq.cfg
+
+```bash
+pushd bridge
+  bash make_env.sh
+  cp -r local_test ${TAIKO_MONO_TAIKO_RELAYER_ROOT}
+  pushd ${TAIKO_MONO_TAIKO_RELAYER_ROOT}
+    go build -o relayer ./cmd/
+    pushd docker-compose
+      docker compose up -d
+    popd
+    pushd local_test
+        bash start_l1l2_processor.sh
+        bash start_l1l2_indexer.sh
+        bash start_l2l1_processor.sh
+        bash start_l2l1_indexer.sh # todo check
+    popd
+  popd
+popd
+```
 
 # explorer
+
+# tx test l2
 

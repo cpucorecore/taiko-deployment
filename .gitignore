@@ -5,3 +5,5 @@ accounts
 l1_chain_id.env
 contract_addr_l1.env
 contract_addr_l2.env
+db.cfg
+mq.cfg

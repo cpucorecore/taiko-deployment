@@ -1,10 +1,10 @@
 source ../env/l1_chain_id.env
-source ../env/l2.env
+source ../taiko_geth/l2.env.out
 source ../env/contract_addr_l1.env
 source ../env/contract_addr_l2.env
 
 pushd ../account
-contract_owner_sk=`bash api.sh sk l2 contract_owner_sk`
+contract_owner_sk=`bash api.sh sk l2 contract_owner`
 popd
 
 cat /dev/null > env
