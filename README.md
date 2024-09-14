@@ -91,6 +91,19 @@ popd
 pushd ${DEPLOYMENT_ROOT}
 git clone --depth 1 --branch bridge-ui-v2.12.0 https://github.com/taikoxyz/taiko-mono.git
 git clone --depth 1 --branch v1.5.0 https://github.com/taikoxyz/taiko-geth.git
+
+pushd ${EXPLORER_L1_ROOT}
+  git clone https://github.com/blockscout/blockscout.git
+  pushd blockscout
+    git checkout 8382c357f4240b3e3c7704d2fb88986d685b0a6f
+  popd
+popd
+
+pushd ${EXPLORER_L2_ROOT}
+  git clone https://github.com/blockscout/blockscout.git
+  pushd blockscout
+    git checkout 8382c357f4240b3e3c7704d2fb88986d685b0a6f
+  popd
 popd
 ```
 
@@ -106,6 +119,18 @@ popd
 cp git_patch/taiko-geth.patch ${TAIKO_GETH_ROOT}
 pushd ${TAIKO_GETH_ROOT}
 git apply taiko-geth.patch
+popd
+
+# explorer l1
+cp explorer_l1/l1.patch ${EXPLORER_BS_L1_ROOT}
+pushd ${EXPLORER_BS_L1_ROOT}
+git apply l1.patch
+popd
+
+# explorer l2
+cp explorer_l2/l2.patch ${EXPLORER_BS_L2_ROOT}
+pushd ${EXPLORER_BS_L2_ROOT}
+git apply l2.patch
 popd
 ```
 
@@ -234,6 +259,24 @@ popd
 ```
 
 # explorer
+## start l1 explorer
+```bash
+pushd ${EXPLORER_BS_L1_ROOT}/docker-compose
+docker compose up -d
+popd
+```
+
+retry when meet err:
+```txt
+ ✘ sig-provider-l1 Error Head "https://ghcr.io/v2/blockscout/sig-provider/manifests/latest": Get "https://ghcr.io/token?scope=repository%3Ablockscout%2Fsig-provider%3Apull&service=ghcr.io": read tcp 127.0.0.1:43520->127.0.0.... 
+```
+
+## start l2 explorer
+```bash
+pushd ${EXPLORER_BS_L2_ROOT}/docker-compose
+docker compose up -d
+popd
+```
 
 # tx test l2
 

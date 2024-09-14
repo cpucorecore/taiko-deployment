@@ -1,0 +1,200 @@
+diff --git a/docker-compose/docker-compose.yml b/docker-compose/docker-compose.yml
+index 167df06893..b0cbc494ac 100644
+--- a/docker-compose/docker-compose.yml
++++ b/docker-compose/docker-compose.yml
+@@ -1,5 +1,3 @@
+-version: '3.9'
+-
+ services:
+   redis-db:
+     extends:
+@@ -41,10 +39,17 @@ services:
+     links:
+       - db:database
+     environment:
+-        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
+-        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:8545/
+-        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
+-        CHAIN_ID: '1337'
++        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:28545/
++        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:28545/
++        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:28546/
++        CHAIN_ID: '666666'
++
++  sc-verifier:
++    extends:
++      file: ./services/smart-contract-verifier.yml
++      service: smart-contract-verifier
++    ports:
++      - 8082:8050
+ 
+   visualizer:
+     extends:
+diff --git a/docker-compose/envs/common-blockscout.env b/docker-compose/envs/common-blockscout.env
+index 7e7bda27e8..a99ce6ec53 100644
+--- a/docker-compose/envs/common-blockscout.env
++++ b/docker-compose/envs/common-blockscout.env
+@@ -1,12 +1,12 @@
+ ETHEREUM_JSONRPC_VARIANT=geth
+-ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:8545/
++ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:28545/
+ # ETHEREUM_JSONRPC_FALLBACK_HTTP_URL=
+ DATABASE_URL=postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/blockscout
+ # DATABASE_EVENT_URL=
+ # DATABASE_QUEUE_TARGET
+ # TEST_DATABASE_URL=
+ # TEST_DATABASE_READ_ONLY_API_URL=
+-ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:8545/
++ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:28545/
+ # ETHEREUM_JSONRPC_FALLBACK_TRACE_URL=
+ # ETHEREUM_JSONRPC_FALLBACK_ETH_CALL_URL=
+ # ETHEREUM_JSONRPC_ETH_CALL_URL=
+@@ -332,9 +332,9 @@ JSON_RPC=
+ API_RATE_LIMIT_UI_V2_TOKEN_TTL_IN_SECONDS=18000
+ FETCH_REWARDS_WAY=trace_block
+ MICROSERVICE_SC_VERIFIER_ENABLED=true
+-# MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier:8050/
++ MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier:8050/
+ # MICROSERVICE_SC_VERIFIER_TYPE=sc_verifier
+-MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
++#MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
+ MICROSERVICE_SC_VERIFIER_TYPE=eth_bytecode_db
+ MICROSERVICE_ETH_BYTECODE_DB_INTERVAL_BETWEEN_LOOKUPS=10m
+ MICROSERVICE_ETH_BYTECODE_DB_MAX_LOOKUPS_CONCURRENCY=10
+diff --git a/docker-compose/envs/common-frontend.env b/docker-compose/envs/common-frontend.env
+index a3dcded763..7a7c5d7da0 100644
+--- a/docker-compose/envs/common-frontend.env
++++ b/docker-compose/envs/common-frontend.env
+@@ -1,17 +1,21 @@
+-NEXT_PUBLIC_API_HOST=localhost
++NEXT_PUBLIC_API_HOST=192.168.100.77
+ NEXT_PUBLIC_API_PROTOCOL=http
+-NEXT_PUBLIC_STATS_API_HOST=http://localhost:8080
+-NEXT_PUBLIC_NETWORK_NAME=Awesome chain
+-NEXT_PUBLIC_NETWORK_SHORT_NAME=Awesome chain
+-NEXT_PUBLIC_NETWORK_ID=5
+-NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Ether
+-NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=ETH
++NEXT_PUBLIC_STATS_API_HOST=http://192.168.100.77:8080
++
++NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=20464af66e7ad1f0f73458addbd0fe90
++NEXT_PUBLIC_NETWORK_RPC_URL=http://192.168.100.77:28545
++NEXT_PUBLIC_NETWORK_NAME=local taiko testnet
++NEXT_PUBLIC_NETWORK_SHORT_NAME=nb chain
++NEXT_PUBLIC_NETWORK_ID=666666
++NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Taiko
++NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=TKO
+ NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS=18
+ NEXT_PUBLIC_API_BASE_PATH=/
+-NEXT_PUBLIC_APP_HOST=localhost
++NEXT_PUBLIC_APP_HOST=192.168.100.77
+ NEXT_PUBLIC_APP_PROTOCOL=http
+ NEXT_PUBLIC_HOMEPAGE_CHARTS=['daily_txs']
+-NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:8081
++NEXT_PUBLIC_VISUALIZE_API_HOST=http://192.168.100.77:8081
+ NEXT_PUBLIC_IS_TESTNET=true
+ NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL=ws
+-NEXT_PUBLIC_API_SPEC_URL=https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml
+\ No newline at end of file
++NEXT_PUBLIC_API_SPEC_URL=https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml
++NEXT_PUBLIC_AD_BANNER_PROVIDER=none
+diff --git a/docker-compose/envs/common-smart-contract-verifier.env b/docker-compose/envs/common-smart-contract-verifier.env
+index 5fdf805ec6..a88425a740 100644
+--- a/docker-compose/envs/common-smart-contract-verifier.env
++++ b/docker-compose/envs/common-smart-contract-verifier.env
+@@ -2,6 +2,9 @@
+ # When uncommented, they would overwrite corresponding values from `base.toml`
+ # configuration file.
+ 
++# HTTP_PROXY=http://host.docker.internal:7890
++# HTTPS_PROXY=http://host.docker.internal:7890
++
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__ENABLED=true
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__ADDR=0.0.0.0:8050
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__MAX_BODY_SIZE=2097152
+diff --git a/docker-compose/proxy/default.conf.template b/docker-compose/proxy/default.conf.template
+index dbd5180d10..c67e804d25 100644
+--- a/docker-compose/proxy/default.conf.template
++++ b/docker-compose/proxy/default.conf.template
+@@ -38,7 +38,7 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+ 
+@@ -60,7 +60,7 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+     add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -80,7 +80,7 @@ server {
+         proxy_set_header      Connection $connection_upgrade;
+         proxy_cache_bypass    $http_upgrade;
+         if ($request_method = 'OPTIONS') {
+-            add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77' always;
+             add_header 'Access-Control-Allow-Credentials' 'true' always;
+             add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+             add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -90,4 +90,4 @@ server {
+             return 204;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/docker-compose/proxy/microservices.conf.template b/docker-compose/proxy/microservices.conf.template
+index 708812f571..af669dfbc0 100644
+--- a/docker-compose/proxy/microservices.conf.template
++++ b/docker-compose/proxy/microservices.conf.template
+@@ -10,7 +10,7 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+ 
+@@ -32,7 +32,7 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+     add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -52,7 +52,7 @@ server {
+         proxy_set_header      Connection $connection_upgrade;
+         proxy_cache_bypass    $http_upgrade;
+         if ($request_method = 'OPTIONS') {
+-            add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+             add_header 'Access-Control-Allow-Credentials' 'true' always;
+             add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+             add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -62,4 +62,4 @@ server {
+             return 204;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/docker-compose/services/nginx.yml b/docker-compose/services/nginx.yml
+index bc225c9082..80614572f9 100644
+--- a/docker-compose/services/nginx.yml
++++ b/docker-compose/services/nginx.yml
+@@ -17,4 +17,4 @@ services:
+       - target: 8080
+         published: 8080
+       - target: 8081
+-        published: 8081
++        published: 18081

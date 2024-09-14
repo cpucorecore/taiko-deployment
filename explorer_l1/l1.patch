@@ -1,0 +1,624 @@
+diff --git a/docker-compose/docker-compose.yml b/docker-compose/docker-compose.yml
+index 167df06893..806489a1d0 100644
+--- a/docker-compose/docker-compose.yml
++++ b/docker-compose/docker-compose.yml
+@@ -1,31 +1,29 @@
+-version: '3.9'
+-
+ services:
+-  redis-db:
++  redis-db-l1:
+     extends:
+       file: ./services/redis.yml
+-      service: redis-db
++      service: redis-db-l1
+ 
+-  db-init:
++  db-init-l1:
+     extends:
+       file: ./services/db.yml
+-      service: db-init
++      service: db-init-l1
+ 
+-  db:
++  db-l1:
+     depends_on:
+-      db-init:
++      db-init-l1:
+         condition: service_completed_successfully
+     extends:
+       file: ./services/db.yml
+-      service: db
++      service: db-l1
+ 
+-  backend:
++  backend-l1:
+     depends_on:
+-      - db
+-      - redis-db
++      - db-l1
++      - redis-db-l1
+     extends:
+       file: ./services/backend.yml
+-      service: backend
++      service: backend-l1
+     build:
+       context: ..
+       dockerfile: ./docker/Dockerfile
+@@ -39,64 +37,71 @@ services:
+         ADMIN_PANEL_ENABLED: ""
+         RELEASE_VERSION: 6.7.2
+     links:
+-      - db:database
++      - db-l1:database
+     environment:
+-        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
+-        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:8545/
+-        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
+-        CHAIN_ID: '1337'
++        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:32906/
++        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:32906/
++        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:32905/
++        CHAIN_ID: '3151908'
++
++  sc-verifier-l1:
++    extends:
++      file: ./services/smart-contract-verifier.yml
++      service: smart-contract-verifier-l1
++    ports:
++      - 18082:8050
+ 
+-  visualizer:
++  visualizer-l1:
+     extends:
+       file: ./services/visualizer.yml
+-      service: visualizer
++      service: visualizer-l1
+ 
+-  sig-provider:
++  sig-provider-l1:
+     extends:
+       file: ./services/sig-provider.yml
+-      service: sig-provider
++      service: sig-provider-l1
+ 
+-  frontend:
++  frontend-l1:
+     depends_on:
+-      - backend
++      - backend-l1
+     extends:
+       file: ./services/frontend.yml
+-      service: frontend
++      service: frontend-l1
+ 
+-  stats-db-init:
++  stats-db-init-l1:
+     extends:
+       file: ./services/stats.yml
+-      service: stats-db-init
++      service: stats-db-init-l1
+ 
+-  stats-db:
++  stats-db-l1:
+     depends_on:
+-      stats-db-init:
++      stats-db-init-l1:
+         condition: service_completed_successfully
+     extends:
+       file: ./services/stats.yml
+-      service: stats-db
++      service: stats-db-l1
+ 
+-  stats:
++  stats-l1:
+     depends_on:
+-      - stats-db
+-      - backend
++      - stats-db-l1
++      - backend-l1
+     extends:
+       file: ./services/stats.yml
+-      service: stats
++      service: stats-l1
+ 
+-  user-ops-indexer:
++  user-ops-indexer-l1:
+     depends_on:
+-      - db
+-      - backend
++      - db-l1
++      - backend-l1
+     extends:
+       file: ./services/user-ops-indexer.yml
+-      service: user-ops-indexer
++      service: user-ops-indexer-l1
+ 
+-  proxy:
++  proxy-l1:
+     depends_on:
+-      - backend
+-      - frontend
+-      - stats
++      - backend-l1
++      - frontend-l1
++      - stats-l1
+     extends:
+       file: ./services/nginx.yml
+-      service: proxy
++      service: proxy-l1
+diff --git a/docker-compose/envs/common-blockscout.env b/docker-compose/envs/common-blockscout.env
+index 7e7bda27e8..3f0b4402be 100644
+--- a/docker-compose/envs/common-blockscout.env
++++ b/docker-compose/envs/common-blockscout.env
+@@ -1,12 +1,12 @@
+ ETHEREUM_JSONRPC_VARIANT=geth
+-ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:8545/
++ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:32906/
+ # ETHEREUM_JSONRPC_FALLBACK_HTTP_URL=
+-DATABASE_URL=postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/blockscout
++DATABASE_URL=postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF9@db-l1:5432/blockscout
+ # DATABASE_EVENT_URL=
+ # DATABASE_QUEUE_TARGET
+ # TEST_DATABASE_URL=
+ # TEST_DATABASE_READ_ONLY_API_URL=
+-ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:8545/
++ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:32906/
+ # ETHEREUM_JSONRPC_FALLBACK_TRACE_URL=
+ # ETHEREUM_JSONRPC_FALLBACK_ETH_CALL_URL=
+ # ETHEREUM_JSONRPC_ETH_CALL_URL=
+@@ -332,20 +332,20 @@ JSON_RPC=
+ API_RATE_LIMIT_UI_V2_TOKEN_TTL_IN_SECONDS=18000
+ FETCH_REWARDS_WAY=trace_block
+ MICROSERVICE_SC_VERIFIER_ENABLED=true
+-# MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier:8050/
++ MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier-l1:8050/
+ # MICROSERVICE_SC_VERIFIER_TYPE=sc_verifier
+-MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
++#MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
+ MICROSERVICE_SC_VERIFIER_TYPE=eth_bytecode_db
+ MICROSERVICE_ETH_BYTECODE_DB_INTERVAL_BETWEEN_LOOKUPS=10m
+ MICROSERVICE_ETH_BYTECODE_DB_MAX_LOOKUPS_CONCURRENCY=10
+ MICROSERVICE_VISUALIZE_SOL2UML_ENABLED=true
+-MICROSERVICE_VISUALIZE_SOL2UML_URL=http://visualizer:8050/
++MICROSERVICE_VISUALIZE_SOL2UML_URL=http://visualizer-l1:8050/
+ MICROSERVICE_SIG_PROVIDER_ENABLED=true
+-MICROSERVICE_SIG_PROVIDER_URL=http://sig-provider:8050/
++MICROSERVICE_SIG_PROVIDER_URL=http://sig-provider-l1:8050/
+ # MICROSERVICE_BENS_URL=
+ # MICROSERVICE_BENS_ENABLED=
+ MICROSERVICE_ACCOUNT_ABSTRACTION_ENABLED=false
+-MICROSERVICE_ACCOUNT_ABSTRACTION_URL=http://user-ops-indexer:8050/
++MICROSERVICE_ACCOUNT_ABSTRACTION_URL=http://user-ops-indexer-l1:8050/
+ # MICROSERVICE_METADATA_URL=
+ # MICROSERVICE_METADATA_ENABLED=
+ DECODE_NOT_A_CONTRACT_CALLS=true
+@@ -365,7 +365,7 @@ DECODE_NOT_A_CONTRACT_CALLS=true
+ # ACCOUNT_WATCHLIST_ADDRESSES_LIMIT=15
+ ACCOUNT_CLOAK_KEY=
+ ACCOUNT_ENABLED=false
+-ACCOUNT_REDIS_URL=redis://redis-db:6379
++ACCOUNT_REDIS_URL=redis://redis-db-l1:6379
+ EIP_1559_ELASTICITY_MULTIPLIER=2
+ # MIXPANEL_TOKEN=
+ # MIXPANEL_URL=
+diff --git a/docker-compose/envs/common-frontend.env b/docker-compose/envs/common-frontend.env
+index a3dcded763..85b6e0524d 100644
+--- a/docker-compose/envs/common-frontend.env
++++ b/docker-compose/envs/common-frontend.env
+@@ -1,17 +1,21 @@
+-NEXT_PUBLIC_API_HOST=localhost
++NEXT_PUBLIC_API_HOST=192.168.100.77:20080
+ NEXT_PUBLIC_API_PROTOCOL=http
+-NEXT_PUBLIC_STATS_API_HOST=http://localhost:8080
+-NEXT_PUBLIC_NETWORK_NAME=Awesome chain
+-NEXT_PUBLIC_NETWORK_SHORT_NAME=Awesome chain
+-NEXT_PUBLIC_NETWORK_ID=5
+-NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Ether
+-NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=ETH
++NEXT_PUBLIC_STATS_API_HOST=http://192.168.100.77:28080
++
++NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=20464af66e7ad1f0f73458addbd0fe90
++NEXT_PUBLIC_NETWORK_RPC_URL=http://192.168.100.77:32906
++NEXT_PUBLIC_NETWORK_NAME=local eth testnet
++NEXT_PUBLIC_NETWORK_SHORT_NAME=l1 chain
++NEXT_PUBLIC_NETWORK_ID=3151908
++NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Tether
++NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=Eth
+ NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS=18
+ NEXT_PUBLIC_API_BASE_PATH=/
+-NEXT_PUBLIC_APP_HOST=localhost
++NEXT_PUBLIC_APP_HOST=192.168.100.77:20080
+ NEXT_PUBLIC_APP_PROTOCOL=http
+ NEXT_PUBLIC_HOMEPAGE_CHARTS=['daily_txs']
+-NEXT_PUBLIC_VISUALIZE_API_HOST=http://localhost:8081
++NEXT_PUBLIC_VISUALIZE_API_HOST=http://192.168.100.77:28081
+ NEXT_PUBLIC_IS_TESTNET=true
+ NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL=ws
+-NEXT_PUBLIC_API_SPEC_URL=https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml
+\ No newline at end of file
++NEXT_PUBLIC_API_SPEC_URL=https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml
++NEXT_PUBLIC_AD_BANNER_PROVIDER=none
+diff --git a/docker-compose/envs/common-smart-contract-verifier.env b/docker-compose/envs/common-smart-contract-verifier.env
+index 5fdf805ec6..a88425a740 100644
+--- a/docker-compose/envs/common-smart-contract-verifier.env
++++ b/docker-compose/envs/common-smart-contract-verifier.env
+@@ -2,6 +2,9 @@
+ # When uncommented, they would overwrite corresponding values from `base.toml`
+ # configuration file.
+ 
++# HTTP_PROXY=http://host.docker.internal:7890
++# HTTPS_PROXY=http://host.docker.internal:7890
++
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__ENABLED=true
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__ADDR=0.0.0.0:8050
+ SMART_CONTRACT_VERIFIER__SERVER__HTTP__MAX_BODY_SIZE=2097152
+diff --git a/docker-compose/proxy/default.conf.template b/docker-compose/proxy/default.conf.template
+index dbd5180d10..b4d737d11b 100644
+--- a/docker-compose/proxy/default.conf.template
++++ b/docker-compose/proxy/default.conf.template
+@@ -38,12 +38,12 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:20080' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+ 
+     location / {
+-        proxy_pass            http://stats:8050/;
++        proxy_pass            http://stats-l1:8050/;
+         proxy_http_version    1.1;
+         proxy_set_header      Host "$host";
+         proxy_set_header      X-Real-IP "$remote_addr";
+@@ -60,13 +60,13 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:20080' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+     add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+ 
+     location / {
+-        proxy_pass            http://visualizer:8050/;
++        proxy_pass            http://visualizer-l1:8050/;
+         proxy_http_version    1.1;
+         proxy_buffering       off;
+         proxy_set_header      Host "$host";
+@@ -80,7 +80,7 @@ server {
+         proxy_set_header      Connection $connection_upgrade;
+         proxy_cache_bypass    $http_upgrade;
+         if ($request_method = 'OPTIONS') {
+-            add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77' always;
+             add_header 'Access-Control-Allow-Credentials' 'true' always;
+             add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+             add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -90,4 +90,4 @@ server {
+             return 204;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/docker-compose/proxy/microservices.conf.template b/docker-compose/proxy/microservices.conf.template
+index 708812f571..8d477551ce 100644
+--- a/docker-compose/proxy/microservices.conf.template
++++ b/docker-compose/proxy/microservices.conf.template
+@@ -10,12 +10,12 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+ 
+     location / {
+-        proxy_pass            http://stats:8050/;
++        proxy_pass            http://stats-l1:8050/;
+         proxy_http_version    1.1;
+         proxy_set_header      Host "$host";
+         proxy_set_header      X-Real-IP "$remote_addr";
+@@ -32,13 +32,13 @@ server {
+     proxy_http_version 1.1;
+     proxy_hide_header Access-Control-Allow-Origin;
+     proxy_hide_header Access-Control-Allow-Methods;
+-    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+     add_header 'Access-Control-Allow-Credentials' 'true' always;
+     add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+     add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+ 
+     location / {
+-        proxy_pass            http://visualizer:8050/;
++        proxy_pass            http://visualizer-l1:8050/;
+         proxy_http_version    1.1;
+         proxy_buffering       off;
+         proxy_set_header      Host "$host";
+@@ -52,7 +52,7 @@ server {
+         proxy_set_header      Connection $connection_upgrade;
+         proxy_cache_bypass    $http_upgrade;
+         if ($request_method = 'OPTIONS') {
+-            add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
+             add_header 'Access-Control-Allow-Credentials' 'true' always;
+             add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
+             add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
+@@ -62,4 +62,4 @@ server {
+             return 204;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/docker-compose/services/backend.yml b/docker-compose/services/backend.yml
+index cf8a0871d3..bdb52a8f47 100644
+--- a/docker-compose/services/backend.yml
++++ b/docker-compose/services/backend.yml
+@@ -1,16 +1,16 @@
+ version: '3.9'
+ 
+ services:
+-  backend:
++  backend-l1:
+     image: blockscout/${DOCKER_REPO:-blockscout}:${DOCKER_TAG:-latest}
+     pull_policy: always
+     restart: always
+     stop_grace_period: 5m
+-    container_name: 'backend'
++    container_name: 'backend-l1'
+     command: sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
+     extra_hosts:
+       - 'host.docker.internal:host-gateway'
+     env_file:
+       -  ../envs/common-blockscout.env
+     volumes:
+-      - ./logs/:/app/logs/
+\ No newline at end of file
++      - ./logs/:/app/logs/
+diff --git a/docker-compose/services/db.yml b/docker-compose/services/db.yml
+index 430409bbec..8f986b5c15 100644
+--- a/docker-compose/services/db.yml
++++ b/docker-compose/services/db.yml
+@@ -1,7 +1,7 @@
+ version: '3.9'
+ 
+ services:
+-  db-init:
++  db-init-l1:
+     image: postgres:15
+     volumes:
+       - ./blockscout-db-data:/var/lib/postgresql/data
+@@ -11,20 +11,20 @@ services:
+       - |
+         chown -R 2000:2000 /var/lib/postgresql/data
+ 
+-  db:
++  db-l1:
+     image: postgres:15
+     user: 2000:2000
+     shm_size: 256m
+     restart: always
+-    container_name: 'db'
++    container_name: 'db-l1'
+     command: postgres -c 'max_connections=200' -c 'client_connection_check_interval=60000'
+     environment:
+         POSTGRES_DB: 'blockscout'
+         POSTGRES_USER: 'blockscout'
+-        POSTGRES_PASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF8'
++        POSTGRES_PASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF9'
+     ports:
+       - target: 5432
+-        published: 7432
++        published: 17432
+     volumes:
+       - ./blockscout-db-data:/var/lib/postgresql/data
+     healthcheck:
+diff --git a/docker-compose/services/frontend.yml b/docker-compose/services/frontend.yml
+index 2dba9b2856..74969d7ca8 100644
+--- a/docker-compose/services/frontend.yml
++++ b/docker-compose/services/frontend.yml
+@@ -1,11 +1,11 @@
+ version: '3.9'
+ 
+ services:
+-  frontend:
++  frontend-l1:
+     image: ghcr.io/blockscout/frontend:${FRONTEND_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'frontend'
++    container_name: 'frontend-l1'
+     env_file:
+       -  ../envs/common-frontend.env
+diff --git a/docker-compose/services/nginx.yml b/docker-compose/services/nginx.yml
+index bc225c9082..d96d2e6602 100644
+--- a/docker-compose/services/nginx.yml
++++ b/docker-compose/services/nginx.yml
+@@ -1,20 +1,20 @@
+ version: '3.9'
+ 
+ services:
+-  proxy:
++  proxy-l1:
+     image: nginx
+-    container_name: proxy
++    container_name: proxy-l1
+     extra_hosts:
+       - 'host.docker.internal:host-gateway'
+     volumes:
+       - "../proxy:/etc/nginx/templates"
+     environment:
+-      BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend:4000}
+-      FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend:3000}
++      BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend-l1:4000}
++      FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend-l1:3000}
+     ports:
+       - target: 80
+-        published: 80
++        published: 20080
+       - target: 8080
+-        published: 8080
++        published: 28080
+       - target: 8081
+-        published: 8081
++        published: 28081
+diff --git a/docker-compose/services/redis.yml b/docker-compose/services/redis.yml
+index 93f616686d..1ba3e66975 100644
+--- a/docker-compose/services/redis.yml
++++ b/docker-compose/services/redis.yml
+@@ -1,9 +1,9 @@
+ version: '3.9'
+ 
+ services:
+-  redis-db:
++  redis-db-l1:
+     image: 'redis:alpine'
+-    container_name: redis-db
++    container_name: redis-db-l1
+     command: redis-server
+     volumes:
+       - ./redis-data:/data
+diff --git a/docker-compose/services/sig-provider.yml b/docker-compose/services/sig-provider.yml
+index 8c0cb33337..14b4788042 100644
+--- a/docker-compose/services/sig-provider.yml
++++ b/docker-compose/services/sig-provider.yml
+@@ -1,9 +1,9 @@
+ version: '3.9'
+ 
+ services:
+-  sig-provider:
++  sig-provider-l1:
+     image: ghcr.io/blockscout/sig-provider:${SIG_PROVIDER_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'sig-provider'
++    container_name: 'sig-provider-l1'
+diff --git a/docker-compose/services/smart-contract-verifier.yml b/docker-compose/services/smart-contract-verifier.yml
+index 03e633c695..fc4fc67000 100644
+--- a/docker-compose/services/smart-contract-verifier.yml
++++ b/docker-compose/services/smart-contract-verifier.yml
+@@ -1,11 +1,11 @@
+ version: '3.9'
+ 
+ services:
+-  smart-contract-verifier:
++  smart-contract-verifier-l1:
+     image: ghcr.io/blockscout/smart-contract-verifier:${SMART_CONTRACT_VERIFIER_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'smart-contract-verifier'
++    container_name: 'smart-contract-verifier-1'
+     env_file:
+       -  ../envs/common-smart-contract-verifier.env
+diff --git a/docker-compose/services/stats.yml b/docker-compose/services/stats.yml
+index d33723b83e..288a05cf72 100644
+--- a/docker-compose/services/stats.yml
++++ b/docker-compose/services/stats.yml
+@@ -1,7 +1,7 @@
+ version: '3.9'
+ 
+ services:
+-  stats-db-init:
++  stats-db-init-l1:
+     image: postgres:15
+     volumes:
+       - ./stats-db-data:/var/lib/postgresql/data
+@@ -11,20 +11,20 @@ services:
+       - |
+         chown -R 2000:2000 /var/lib/postgresql/data
+ 
+-  stats-db:
++  stats-db-l1:
+     image: postgres:15
+     user: 2000:2000
+     shm_size: 256m
+     restart: always
+-    container_name: 'stats-db'
++    container_name: 'stats-db-l1'
+     command: postgres -c 'max_connections=200'
+     environment:
+         POSTGRES_DB: 'stats'
+         POSTGRES_USER: 'stats'
+-        POSTGRES_PASSWORD: 'n0uejXPl61ci6ldCuE2gQU5Y'
++        POSTGRES_PASSWORD: 'n0uejXPl61ci6ldCuE2gQU51'
+     ports:
+       - target: 5432
+-        published: 7433
++        published: 17433
+     volumes:
+       - ./stats-db-data:/var/lib/postgresql/data
+     healthcheck:
+@@ -34,18 +34,18 @@ services:
+       retries: 5
+       start_period: 10s
+ 
+-  stats:
++  stats-l1:
+     image: ghcr.io/blockscout/stats:${STATS_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'stats'
++    container_name: 'stats-l1'
+     extra_hosts:
+       - 'host.docker.internal:host-gateway'
+     env_file:
+       -  ../envs/common-stats.env
+     environment:
+-      - STATS__DB_URL=${STATS__DB_URL:-postgres://stats:n0uejXPl61ci6ldCuE2gQU5Y@stats-db:5432/stats}
+-      - STATS__BLOCKSCOUT_DB_URL=${STATS__BLOCKSCOUT_DB_URL:-postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/blockscout}
++      - STATS__DB_URL=${STATS__DB_URL:-postgres://stats:n0uejXPl61ci6ldCuE2gQU51@stats-db-l1:5432/stats}
++      - STATS__BLOCKSCOUT_DB_URL=${STATS__BLOCKSCOUT_DB_URL:-postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF9@db-l1:5432/blockscout}
+       - STATS__CREATE_DATABASE=${STATS__CREATE_DATABASE:-true}
+       - STATS__RUN_MIGRATIONS=${STATS__RUN_MIGRATIONS:-true}
+diff --git a/docker-compose/services/user-ops-indexer.yml b/docker-compose/services/user-ops-indexer.yml
+index 352083b9a6..df1d6ad958 100644
+--- a/docker-compose/services/user-ops-indexer.yml
++++ b/docker-compose/services/user-ops-indexer.yml
+@@ -1,17 +1,17 @@
+ version: '3.9'
+ 
+ services:
+-  user-ops-indexer:
++  user-ops-indexer-l1:
+     image: ghcr.io/blockscout/user-ops-indexer:${USER_OPS_INDEXER_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'user-ops-indexer'
++    container_name: 'user-ops-indexer-l1'
+     extra_hosts:
+       - 'host.docker.internal:host-gateway'
+     env_file:
+       -  ../envs/common-user-ops-indexer.env
+     environment:
+       - USER_OPS_INDEXER__INDEXER__RPC_URL=${USER_OPS_INDEXER__INDEXER__RPC_URL:-ws://host.docker.internal:8545/}
+-      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${USER_OPS_INDEXER__DATABASE__CONNECT__URL:-postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/blockscout}
++      - USER_OPS_INDEXER__DATABASE__CONNECT__URL=${USER_OPS_INDEXER__DATABASE__CONNECT__URL:-postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF9@db-l1:5432/blockscout}
+       - USER_OPS_INDEXER__DATABASE__RUN_MIGRATIONS=true
+diff --git a/docker-compose/services/visualizer.yml b/docker-compose/services/visualizer.yml
+index 37a4aaad88..35b2d19c67 100644
+--- a/docker-compose/services/visualizer.yml
++++ b/docker-compose/services/visualizer.yml
+@@ -1,11 +1,11 @@
+ version: '3.9'
+ 
+ services:
+-  visualizer:
++  visualizer-l1:
+     image: ghcr.io/blockscout/visualizer:${VISUALIZER_DOCKER_TAG:-latest}
+     pull_policy: always
+     platform: linux/amd64
+     restart: always
+-    container_name: 'visualizer'
++    container_name: 'visualizer-l1'
+     env_file:
+       -  ../envs/common-visualizer.env
