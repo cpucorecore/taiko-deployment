@@ -47,8 +47,8 @@ pushd ${DEPLOYMENT_ROOT}
   git clone --depth 1 --branch v5.2.1 https://github.com/sigp/lighthouse.git
 popd
 
-cp l1/lighthouse.patch ${LIGHTHOUSE_L1_ROOT}
-cp l1/*.sh ${LIGHTHOUSE_L1_LOCAL_TESTNET_ROOT}
+cp l1_deploy/lighthouse.patch ${LIGHTHOUSE_L1_ROOT}
+cp l1_deploy/*.sh ${LIGHTHOUSE_L1_LOCAL_TESTNET_ROOT}
 
 pushd ${LIGHTHOUSE_L1_ROOT}
   git apply lighthouse.patch
@@ -104,6 +104,8 @@ pushd ${EXPLORER_L2_ROOT}
   pushd blockscout
     git checkout 8382c357f4240b3e3c7704d2fb88986d685b0a6f
   popd
+popd
+
 popd
 ```
 
@@ -177,6 +179,7 @@ popd
 ```
 
 # deploy l1 contract
+put private key into account/parent_account_l1.sk
 ```bash
 pushd account
 bash fund_l1_account.sh
@@ -228,6 +231,7 @@ wait about 10min, let L2 generate some blocks
 
 ```bash
 pushd prepare_l2
+  bash make_env.sh
   cp env prepare-l2.sh ${PREPARE_L2}
     pushd ${PREPARE_L2}
       bash prepare-l2.sh
@@ -236,6 +240,11 @@ popd
 ```
 
 # bridge
+```bash
+cp bridge/db.cfg.template bridge/db.cfg
+cp bridge/mq.cfg.template bridge/mq.cfg
+```
+
 update bridge/db.cfg
 update bridge/mq.cfg
 
@@ -252,7 +261,7 @@ pushd bridge
         bash start_l1l2_processor.sh
         bash start_l1l2_indexer.sh
         bash start_l2l1_processor.sh
-        bash start_l2l1_indexer.sh # todo check
+        bash start_l2l1_indexer.sh
     popd
   popd
 popd
@@ -278,5 +287,12 @@ docker compose up -d
 popd
 ```
 
+L2 explorer:
+http://{your deployment host ip}/
+
+L1 explorer
+http://{your deployment host ip}:20080/
+
 # tx test l2
+[taiko-test](https://github.com/cpucorecore/taiko-test)
 

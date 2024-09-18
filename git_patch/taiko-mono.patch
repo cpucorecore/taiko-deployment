@@ -39,7 +39,7 @@ index 04325eaa5..e72f960ac 100644
      "fmt:sol": "forge fmt",
      "generate:genesis": "ts-node ./utils/generate_genesis/main.ts",
 diff --git a/packages/relayer/docker-compose/docker-compose.yml b/packages/relayer/docker-compose/docker-compose.yml
-index 66192fde6..c0b50f897 100644
+index 66192fd..06e1df1 100644
 --- a/packages/relayer/docker-compose/docker-compose.yml
 +++ b/packages/relayer/docker-compose/docker-compose.yml
 @@ -1,13 +1,13 @@
@@ -58,6 +58,15 @@ index 66192fde6..c0b50f897 100644
      ports:
        - "3306:3306"
      volumes:
+@@ -38,7 +38,7 @@ services:
+       - "--web.console.templates=/etc/prometheus/consoles"
+       - "--web.enable-lifecycle"
+     ports:
+-      - 9090:9090
++      - 19090:9090
+   grafana:
+     image: grafana/grafana
+     restart: always
 @@ -55,7 +55,7 @@ services:
        - prometheus
  

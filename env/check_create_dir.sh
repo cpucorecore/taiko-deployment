@@ -5,7 +5,7 @@ if [ -d ${DEPLOYMENT_ROOT} ]; then
   exit -1
 fi
 
-dir_list=(${ACCOUNT_ROOT} ${JWT_ROOT} ${EXPLORER_L1_ROOT} ${EXPLORER_L1_ROOT} ${PREPARE_L1} ${PREPARE_L2})
+dir_list=(${ACCOUNT_ROOT} ${JWT_ROOT} ${EXPLORER_L1_ROOT} ${EXPLORER_L2_ROOT} ${PREPARE_L1} ${PREPARE_L2})
 for dir in ${dir_list[@]}
 do
   if [ ! -d ${dir} ]; then
