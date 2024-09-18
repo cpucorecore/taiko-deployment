@@ -182,7 +182,7 @@ popd
 put private key into account/parent_account_l1.sk
 ```bash
 pushd account
-bash fund_l1_account.sh
+bash fund_l1_account_all.sh
 popd
 ```
 
@@ -275,11 +275,6 @@ docker compose up -d
 popd
 ```
 
-retry when meet err:
-```txt
- ✘ sig-provider-l1 Error Head "https://ghcr.io/v2/blockscout/sig-provider/manifests/latest": Get "https://ghcr.io/token?scope=repository%3Ablockscout%2Fsig-provider%3Apull&service=ghcr.io": read tcp 127.0.0.1:43520->127.0.0.... 
-```
-
 ## start l2 explorer
 ```bash
 pushd ${EXPLORER_BS_L2_ROOT}/docker-compose
@@ -287,12 +282,25 @@ docker compose up -d
 popd
 ```
 
-L2 explorer:
-http://{your deployment host ip}/
-
-L1 explorer
-http://{your deployment host ip}:20080/
-
 # tx test l2
+```bash
+pushd test
+  bash make_env.sh
+  cp -r env bridge ${TX_TEST_ROOT}
+  pushd ${TX_TEST_ROOT}/bridge
+    bash bridge_eth_l1l2.sh # l1-->l2
+    bash bridge_eth_l2l1.sh # l2-->l1
+  popd
+popd
+```
+
+## Stress Testing
 [taiko-test](https://github.com/cpucorecore/taiko-test)
 
+# some links
+name | url | user&passwd
+-- | -- | --
+mq | http://{your deployment host ip}:15672/#/queues | bridge/mq.cfg
+bridge db | jdbc:mysql://{your deployment host ip}:3306/relayer | bridge/db.cfg
+L1 explorer | http://{your deployment host ip}:20080/ | -
+L2 explorer | http://{your deployment host ip}/ | -
