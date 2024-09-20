@@ -269,6 +269,49 @@ popd
 
 # explorer
 ## start l1 explorer
+
+### update config
+#### blockscout/docker-compose/docker-compose.yml
+```txt
+environment:
+    ETHEREUM_JSONRPC_HTTP_URL: http://{l1 host}:{l1 rpc port}/
+    ETHEREUM_JSONRPC_TRACE_URL: http://{l1 host}:{l1 rpc port}/
+    ETHEREUM_JSONRPC_WS_URL: ws://{l1 host}:{l1 ws port}/
+    CHAIN_ID: '{l1 chain id}'
+```
+
+#### blockscout/docker-compose/envs/common-blockscout.env
+```txt
+ETHEREUM_JSONRPC_HTTP_URL=http://{l1 host}:{l1 rpc port}/
+ETHEREUM_JSONRPC_TRACE_URL=http://{l1 host}:{l1 rpc port}/
+```
+
+#### blockscout/docker-compose/envs/common-frontend.env
+```txt
+NEXT_PUBLIC_API_HOST=192.168.100.77:20080
+NEXT_PUBLIC_STATS_API_HOST=http://{deployment host ip}:28080
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=
+NEXT_PUBLIC_NETWORK_RPC_URL={l1 host}:{l1 rpc port}
+NEXT_PUBLIC_NETWORK_NAME=local eth testnet
+NEXT_PUBLIC_NETWORK_SHORT_NAME=l1 chain
+NEXT_PUBLIC_NETWORK_ID={l1 chain id}
+NEXT_PUBLIC_NETWORK_CURRENCY_NAME=Tether
+NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL=Eth
+NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS=18
+NEXT_PUBLIC_APP_HOST={deployment host ip}:20080
+NEXT_PUBLIC_VISUALIZE_API_HOST=http://{deployment host ip}:28081
+```
+
+#### blockscout/docker-compose/proxy/default.conf.template
+```txt
+add_header 'Access-Control-Allow-Origin' 'http://{deployment host ip}:20080' always;
+```
+
+#### blockscout/docker-compose/proxy/microservices.conf.template
+```txt
+add_header 'Access-Control-Allow-Origin' 'http://{deployment host ip}:3001' always;
+```
+
 ```bash
 pushd ${EXPLORER_BS_L1_ROOT}/docker-compose
 docker compose up -d

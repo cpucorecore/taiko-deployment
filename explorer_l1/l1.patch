@@ -1,5 +1,5 @@
 diff --git a/docker-compose/docker-compose.yml b/docker-compose/docker-compose.yml
-index 167df06893..806489a1d0 100644
+index 167df06893..f384244990 100644
 --- a/docker-compose/docker-compose.yml
 +++ b/docker-compose/docker-compose.yml
 @@ -1,31 +1,29 @@
@@ -56,9 +56,9 @@ index 167df06893..806489a1d0 100644
 -        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:8545/
 -        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
 -        CHAIN_ID: '1337'
-+        ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:32906/
-+        ETHEREUM_JSONRPC_TRACE_URL: http://host.docker.internal:32906/
-+        ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:32905/
++        ETHEREUM_JSONRPC_HTTP_URL: http://192.168.100.77:33097/
++        ETHEREUM_JSONRPC_TRACE_URL: http://192.168.100.77:33097/
++        ETHEREUM_JSONRPC_WS_URL: ws://192.168.100.77:33096/
 +        CHAIN_ID: '3151908'
 +
 +  sc-verifier-l1:
@@ -148,13 +148,13 @@ index 167df06893..806489a1d0 100644
 -      service: proxy
 +      service: proxy-l1
 diff --git a/docker-compose/envs/common-blockscout.env b/docker-compose/envs/common-blockscout.env
-index 7e7bda27e8..3f0b4402be 100644
+index 7e7bda27e8..7c80df8dd3 100644
 --- a/docker-compose/envs/common-blockscout.env
 +++ b/docker-compose/envs/common-blockscout.env
 @@ -1,12 +1,12 @@
  ETHEREUM_JSONRPC_VARIANT=geth
 -ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:8545/
-+ETHEREUM_JSONRPC_HTTP_URL=http://host.docker.internal:32906/
++ETHEREUM_JSONRPC_HTTP_URL=http://192.168.100.77:33097/
  # ETHEREUM_JSONRPC_FALLBACK_HTTP_URL=
 -DATABASE_URL=postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF8@db:5432/blockscout
 +DATABASE_URL=postgresql://blockscout:ceWb1MeLBEeOIfk65gU8EjF9@db-l1:5432/blockscout
@@ -163,16 +163,25 @@ index 7e7bda27e8..3f0b4402be 100644
  # TEST_DATABASE_URL=
  # TEST_DATABASE_READ_ONLY_API_URL=
 -ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:8545/
-+ETHEREUM_JSONRPC_TRACE_URL=http://host.docker.internal:32906/
++ETHEREUM_JSONRPC_TRACE_URL=http://192.168.100.77:33097/
  # ETHEREUM_JSONRPC_FALLBACK_TRACE_URL=
  # ETHEREUM_JSONRPC_FALLBACK_ETH_CALL_URL=
  # ETHEREUM_JSONRPC_ETH_CALL_URL=
+@@ -29,7 +29,7 @@ BLOCKSCOUT_HOST=
+ BLOCKSCOUT_PROTOCOL=
+ SECRET_KEY_BASE=56NtB48ear7+wMSf0IQuWDAAazhpb31qyc7GiyspBP2vh7t5zlCsF5QDv76chXeN
+ # CHECK_ORIGIN=
+-PORT=4000
++PORT=4001
+ COIN_NAME=
+ # METADATA_CONTRACT=
+ # VALIDATORS_CONTRACT=
 @@ -332,20 +332,20 @@ JSON_RPC=
  API_RATE_LIMIT_UI_V2_TOKEN_TTL_IN_SECONDS=18000
  FETCH_REWARDS_WAY=trace_block
  MICROSERVICE_SC_VERIFIER_ENABLED=true
 -# MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier:8050/
-+ MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier-l1:8050/
++MICROSERVICE_SC_VERIFIER_URL=http://smart-contract-verifier-l1:8050/
  # MICROSERVICE_SC_VERIFIER_TYPE=sc_verifier
 -MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
 +#MICROSERVICE_SC_VERIFIER_URL=https://eth-bytecode-db.services.blockscout.com/
@@ -203,10 +212,10 @@ index 7e7bda27e8..3f0b4402be 100644
  # MIXPANEL_TOKEN=
  # MIXPANEL_URL=
 diff --git a/docker-compose/envs/common-frontend.env b/docker-compose/envs/common-frontend.env
-index a3dcded763..85b6e0524d 100644
+index a3dcded763..6c7774ff2f 100644
 --- a/docker-compose/envs/common-frontend.env
 +++ b/docker-compose/envs/common-frontend.env
-@@ -1,17 +1,21 @@
+@@ -1,17 +1,23 @@
 -NEXT_PUBLIC_API_HOST=localhost
 +NEXT_PUBLIC_API_HOST=192.168.100.77:20080
  NEXT_PUBLIC_API_PROTOCOL=http
@@ -219,7 +228,7 @@ index a3dcded763..85b6e0524d 100644
 +NEXT_PUBLIC_STATS_API_HOST=http://192.168.100.77:28080
 +
 +NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=20464af66e7ad1f0f73458addbd0fe90
-+NEXT_PUBLIC_NETWORK_RPC_URL=http://192.168.100.77:32906
++NEXT_PUBLIC_NETWORK_RPC_URL=http://192.168.100.77:33097
 +NEXT_PUBLIC_NETWORK_NAME=local eth testnet
 +NEXT_PUBLIC_NETWORK_SHORT_NAME=l1 chain
 +NEXT_PUBLIC_NETWORK_ID=3151908
@@ -239,22 +248,10 @@ index a3dcded763..85b6e0524d 100644
 \ No newline at end of file
 +NEXT_PUBLIC_API_SPEC_URL=https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml
 +NEXT_PUBLIC_AD_BANNER_PROVIDER=none
-diff --git a/docker-compose/envs/common-smart-contract-verifier.env b/docker-compose/envs/common-smart-contract-verifier.env
-index 5fdf805ec6..a88425a740 100644
---- a/docker-compose/envs/common-smart-contract-verifier.env
-+++ b/docker-compose/envs/common-smart-contract-verifier.env
-@@ -2,6 +2,9 @@
- # When uncommented, they would overwrite corresponding values from `base.toml`
- # configuration file.
- 
-+# HTTP_PROXY=http://host.docker.internal:7890
-+# HTTPS_PROXY=http://host.docker.internal:7890
 +
- SMART_CONTRACT_VERIFIER__SERVER__HTTP__ENABLED=true
- SMART_CONTRACT_VERIFIER__SERVER__HTTP__ADDR=0.0.0.0:8050
- SMART_CONTRACT_VERIFIER__SERVER__HTTP__MAX_BODY_SIZE=2097152
++PORT=3001
 diff --git a/docker-compose/proxy/default.conf.template b/docker-compose/proxy/default.conf.template
-index dbd5180d10..b4d737d11b 100644
+index dbd5180d10..6412cbba60 100644
 --- a/docker-compose/proxy/default.conf.template
 +++ b/docker-compose/proxy/default.conf.template
 @@ -38,12 +38,12 @@ server {
@@ -293,7 +290,7 @@ index dbd5180d10..b4d737d11b 100644
          proxy_cache_bypass    $http_upgrade;
          if ($request_method = 'OPTIONS') {
 -            add_header 'Access-Control-Allow-Origin' 'http://localhost' always;
-+            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:20080' always;
              add_header 'Access-Control-Allow-Credentials' 'true' always;
              add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
              add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
@@ -305,7 +302,7 @@ index dbd5180d10..b4d737d11b 100644
 \ No newline at end of file
 +}
 diff --git a/docker-compose/proxy/microservices.conf.template b/docker-compose/proxy/microservices.conf.template
-index 708812f571..8d477551ce 100644
+index 708812f571..a0ae11d1bc 100644
 --- a/docker-compose/proxy/microservices.conf.template
 +++ b/docker-compose/proxy/microservices.conf.template
 @@ -10,12 +10,12 @@ server {
@@ -313,7 +310,7 @@ index 708812f571..8d477551ce 100644
      proxy_hide_header Access-Control-Allow-Origin;
      proxy_hide_header Access-Control-Allow-Methods;
 -    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
-+    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3001' always;
      add_header 'Access-Control-Allow-Credentials' 'true' always;
      add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
  
@@ -328,7 +325,7 @@ index 708812f571..8d477551ce 100644
      proxy_hide_header Access-Control-Allow-Origin;
      proxy_hide_header Access-Control-Allow-Methods;
 -    add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
-+    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
++    add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3001' always;
      add_header 'Access-Control-Allow-Credentials' 'true' always;
      add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
      add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
@@ -344,7 +341,7 @@ index 708812f571..8d477551ce 100644
          proxy_cache_bypass    $http_upgrade;
          if ($request_method = 'OPTIONS') {
 -            add_header 'Access-Control-Allow-Origin' 'http://localhost:3000' always;
-+            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3000' always;
++            add_header 'Access-Control-Allow-Origin' 'http://192.168.100.77:3001' always;
              add_header 'Access-Control-Allow-Credentials' 'true' always;
              add_header 'Access-Control-Allow-Methods' 'PUT, GET, POST, OPTIONS, DELETE, PATCH' always;
              add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-csrf-token' always;
@@ -437,7 +434,7 @@ index 2dba9b2856..74969d7ca8 100644
      env_file:
        -  ../envs/common-frontend.env
 diff --git a/docker-compose/services/nginx.yml b/docker-compose/services/nginx.yml
-index bc225c9082..d96d2e6602 100644
+index bc225c9082..4e44a29dc6 100644
 --- a/docker-compose/services/nginx.yml
 +++ b/docker-compose/services/nginx.yml
 @@ -1,20 +1,20 @@
@@ -456,8 +453,8 @@ index bc225c9082..d96d2e6602 100644
      environment:
 -      BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend:4000}
 -      FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend:3000}
-+      BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend-l1:4000}
-+      FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend-l1:3000}
++      BACK_PROXY_PASS: ${BACK_PROXY_PASS:-http://backend-l1:4001}
++      FRONT_PROXY_PASS: ${FRONT_PROXY_PASS:-http://frontend-l1:3001}
      ports:
        - target: 80
 -        published: 80
