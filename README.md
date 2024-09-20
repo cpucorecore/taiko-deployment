@@ -46,7 +46,7 @@ popd
 ## deploy L1(optional)
 ```bash
 pushd ${DEPLOYMENT_ROOT}
-  git clone --depth 1 --branch v5.2.1 https://github.com/sigp/lighthouse.git
+git clone --depth 1 -b v5.3.0 https://github.com/sigp/lighthouse.git
 popd
 
 cp l1_deploy/lighthouse.patch ${LIGHTHOUSE_L1_ROOT}
