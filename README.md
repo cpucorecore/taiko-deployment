@@ -1,3 +1,5 @@
+deploy [taiko](https://github.com/taikoxyz/taiko-mono) local testnet
+
 # deploy requirement
 
 ## hardware
