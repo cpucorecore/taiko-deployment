@@ -325,6 +325,18 @@ docker compose up -d
 popd
 ```
 
+# keep alive l2
+txs in l2 will block forever in some cases, to bypass this issue and make l2 process the txs blocked:
+```bash
+pushd keep_alive_l2
+bash make_env.sh
+cp env keep_alive.sh ${KEEP_ALIVE_L2_ROOT}
+pushd ${KEEP_ALIVE_L2_ROOT}
+nohup bash keep_alive.sh > keep_alive.log 2>&1 &
+popd
+popd
+```
+
 # tx test l2
 ```bash
 pushd test
@@ -347,3 +359,4 @@ mq | http://{your deployment host ip}:15672/#/queues | bridge/mq.cfg
 bridge db | jdbc:mysql://{your deployment host ip}:3306/relayer | bridge/db.cfg
 L1 explorer | http://{your deployment host ip}:20080/ | -
 L2 explorer | http://{your deployment host ip}/ | -
+

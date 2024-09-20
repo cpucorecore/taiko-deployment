@@ -5,11 +5,7 @@ module.exports = {
     contractOwner: "",
     l1ChainId: 1,
     chainId: 100001,
-    seedAccounts: [
-        {
-            "": 10000000,
-        },
-    ],
+    seedAccounts: [],
     get contractAddresses() {
         return {
             // ============ Implementations ============

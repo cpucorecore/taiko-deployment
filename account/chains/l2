@@ -1,3 +1,4 @@
 contract_owner
 bridge_processor
+keep_alive_worker
 test
