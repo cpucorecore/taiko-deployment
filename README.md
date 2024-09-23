@@ -11,11 +11,13 @@ deploy [taiko](https://github.com/taikoxyz/taiko-mono) local testnet
 - jq
 - foundry
 - node
-- golang
+- golang: 1.22.7(1.23.x not supported)
 - openssl
 
 ## os
-- ubuntu 24.04LTS
+- ubuntu 24.04LTS 
+
+macOS not tested
 
 ## network proxy
 make sure the deployment env can access github, dockerhub, registry.npmjs.org
@@ -179,6 +181,15 @@ pushd taiko_geth
   popd
 popd
 ```
+
+#### Tips: `make geth` failed
+if you `make geth` failed after you upgrade your macOS to Sequoia(version 15.0) you can try to replace `make get` with cmd below:
+```bash
+go build -ldflags --buildid=none -tags urfave_cli_no_docs,gozkg -trimpath -v -o ./build/bin/geth ./cmd/geth
+```
+
+- but taiko-client also compile failed, so we can not support macOS with version Sequoia(version 15.0)
+- see the [issue](https://github.com/ethereum/go-ethereum/issues/30494)
 
 # deploy l1 contract
 put private key into account/parent_account_l1.sk
