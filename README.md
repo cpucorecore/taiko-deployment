@@ -281,7 +281,7 @@ popd
 ```
 
 # explorer
-## start l1 explorer
+## start l1 explorer(optional)
 
 ### update config
 #### blockscout/docker-compose/docker-compose.yml
@@ -370,6 +370,6 @@ name | url | user&passwd
 -- | -- | --
 mq | http://{your deployment host ip}:15672/#/queues | bridge/mq.cfg
 bridge db | jdbc:mysql://{your deployment host ip}:3306/relayer | bridge/db.cfg
-L1 explorer | http://{your deployment host ip}:20080/ | -
+L1 explorer(optional) | http://{your deployment host ip}:20080/ | -
 L2 explorer | http://{your deployment host ip}/ | -
 
