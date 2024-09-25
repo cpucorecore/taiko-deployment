@@ -182,7 +182,7 @@ pushd taiko_geth
 popd
 ```
 
-### tips: make geth failed
+### tips: `make geth` failed{#t1}
 if you `make geth` failed after you upgrade your macOS to Sequoia(version 15.0) you can try to replace `make geth` with cmd below:
 ```bash
 go build -ldflags --buildid=none -tags urfave_cli_no_docs,gozkg -trimpath -v -o ./build/bin/geth ./cmd/geth
@@ -211,8 +211,8 @@ after update go.mod don't forget to run the command:
 go mod tidy
 ```
 
-- ref [issue](https://github.com/taikoxyz/taiko-mono/issues/18168)
-- ref [issue](https://github.com/ethereum/go-ethereum/issues/30494)
+- ref [taiko-mono #18168](https://github.com/taikoxyz/taiko-mono/issues/18168)
+- ref [go-ethereum #30494](https://github.com/ethereum/go-ethereum/issues/30494)
 
 # deploy l1 contract
 put private key into account/parent_account_l1.sk
@@ -262,7 +262,7 @@ popd
 ```
 
 ### tips: `make build` failed:
-[tips: make geth failed](#tips:-make-geth-failed)
+[tips: make geth failed](#t1)
 
 # prepare l2
 wait about 10min, let L2 generate some blocks
