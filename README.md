@@ -182,7 +182,7 @@ pushd taiko_geth
 popd
 ```
 
-### tips: `make geth` failed{#t1}
+### tips: `make geth` failed {#tip1}
 if you `make geth` failed after you upgrade your macOS to Sequoia(version 15.0) you can try to replace `make geth` with cmd below:
 ```bash
 go build -ldflags --buildid=none -tags urfave_cli_no_docs,gozkg -trimpath -v -o ./build/bin/geth ./cmd/geth
@@ -262,7 +262,7 @@ popd
 ```
 
 ### tips: `make build` failed:
-[tips: make geth failed](#t1)
+[tips: make geth failed](#tip1)
 
 # prepare l2
 wait about 10min, let L2 generate some blocks
