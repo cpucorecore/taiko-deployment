@@ -182,14 +182,37 @@ pushd taiko_geth
 popd
 ```
 
-#### Tips: `make geth` failed
-if you `make geth` failed after you upgrade your macOS to Sequoia(version 15.0) you can try to replace `make get` with cmd below:
+### tips: make geth failed
+if you `make geth` failed after you upgrade your macOS to Sequoia(version 15.0) you can try to replace `make geth` with cmd below:
 ```bash
 go build -ldflags --buildid=none -tags urfave_cli_no_docs,gozkg -trimpath -v -o ./build/bin/geth ./cmd/geth
 ```
 
-- but taiko-client also compile failed, so we can not support macOS with version Sequoia(version 15.0)
-- see the [issue](https://github.com/ethereum/go-ethereum/issues/30494)
+or upgrade go.mod with diff below:
+```diff
+diff --git a/go.mod b/go.mod
+index b12ec2c..d6a175f 100644
+--- a/go.mod
++++ b/go.mod
+@@ -58,7 +58,7 @@ require (
+ 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible
+ 	github.com/status-im/keycard-go v0.2.0
+ 	github.com/stretchr/testify v1.8.4
+-	github.com/supranational/blst v0.3.11
++	github.com/supranational/blst v0.3.13
+ 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+ 	github.com/tyler-smith/go-bip39 v1.1.0
+ 	github.com/urfave/cli/v2 v2.25.7
+
+```
+
+after update go.mod don't forget to run the command: 
+```bash
+go mod tidy
+```
+
+- ref [issue](https://github.com/taikoxyz/taiko-mono/issues/18168)
+- ref [issue](https://github.com/ethereum/go-ethereum/issues/30494)
 
 # deploy l1 contract
 put private key into account/parent_account_l1.sk
@@ -214,7 +237,6 @@ popd
 ```
 
 # prepare l1
-
 ```bash
 pushd prepare_l1
     bash make_env.sh
@@ -238,6 +260,9 @@ pushd taiko_client
   popd
 popd
 ```
+
+### tips: `make build` failed:
+[tips: make geth failed](#tips:-make-geth-failed)
 
 # prepare l2
 wait about 10min, let L2 generate some blocks
